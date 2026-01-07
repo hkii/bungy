@@ -745,46 +745,201 @@
             }
 
             updateAI() {
-                // Simple AI Logic
+                // === ADVANCED STRATEGIC AI ===
                 const target = player1;
                 const dx = target.x - this.x;
                 const dy = target.y - this.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
+                const myCenterX = this.x + this.width / 2;
+                const myCenterY = this.y + this.height / 2;
+                const targetCenterX = target.x + target.width / 2;
+                const targetCenterY = target.y + target.height / 2;
                 
-                // Face Target
-                this.facing = dx > 0 ? 1 : -1;
-
-                // Movement (Maintain distance)
-                if (Math.abs(dx) > 300) {
-                    this.vx += (dx > 0 ? 1 : -1) * 0.5; // Chase
-                } else if (Math.abs(dx) < 100) {
-                    this.vx -= (dx > 0 ? 1 : -1) * 0.5; // Back off
+                // --- THREAT DETECTION: Dodge incoming projectiles ---
+                let dodgeDirection = 0;
+                let shouldDodgeVertical = false;
+                
+                for (const proj of projectiles) {
+                    if (proj.ownerId === this.id) continue; // Ignore own projectiles
+                    
+                    // Check if projectile is heading toward us
+                    const projDx = myCenterX - proj.x;
+                    const projDy = myCenterY - proj.y;
+                    const projDist = Math.sqrt(projDx * projDx + projDy * projDy);
+                    
+                    // Is it coming at us and close?
+                    const isApproaching = (proj.vx > 0 && proj.x < myCenterX) || (proj.vx < 0 && proj.x > myCenterX);
+                    const inDangerZone = projDist < 200 && Math.abs(projDy) < 60;
+                    
+                    if (isApproaching && inDangerZone) {
+                        // Dodge! Move perpendicular to projectile
+                        shouldDodgeVertical = true;
+                        dodgeDirection = projDy > 0 ? -1 : 1; // Move away from projectile's Y
+                    }
                 }
-
-                // Fly if target is high or falling into pit
+                
+                // --- STATE DETERMINATION ---
+                const hpPercent = this.hp / 100;
+                const energyPercent = this.energy / MAX_ENERGY;
+                const targetHpPercent = target.hp / 100;
+                
+                let aiState = 'AGGRESSIVE';
+                if (hpPercent < 0.3) {
+                    aiState = 'DEFENSIVE';
+                } else if (hpPercent > targetHpPercent + 0.3 && energyPercent > 0.5) {
+                    aiState = 'AGGRESSIVE';
+                } else if (dist < 150) {
+                    aiState = 'CLOSE_COMBAT';
+                } else {
+                    aiState = 'TACTICAL';
+                }
+                
+                // --- FACING ---
+                this.facing = dx > 0 ? 1 : -1;
+                
+                // --- MOVEMENT LOGIC ---
                 let flying = false;
-                if ((target.y < this.y - 50 || this.y > canvas.height - 150) && this.energy > FLY_COST) {
-                    this.vy -= 0.8;
+                const moveRoll = Math.random();
+                
+                // Priority 1: Dodge projectiles
+                if (shouldDodgeVertical && this.energy > FLY_COST * 3) {
+                    this.vy += dodgeDirection * 2;
                     this.energy -= FLY_COST;
                     flying = true;
                 }
-
-                if (flying) this.createFlyParticles();
-
-                // Attacks (Randomized)
-                const roll = Math.random();
                 
-                // Flamethrower (Close, energy high)
-                if (dist < 250 && Math.abs(dy) < 50 && this.energy > 400 && roll < 0.05) {
-                    this.attemptFlamethrower(target);
+                // Priority 2: State-based movement
+                switch (aiState) {
+                    case 'AGGRESSIVE':
+                        // Chase hard, get in range
+                        if (dist > 200) {
+                            this.vx += (dx > 0 ? 1 : -1) * 0.8;
+                        }
+                        // Match height aggressively
+                        if (dy < -40 && this.energy > FLY_COST) {
+                            this.vy -= 1.0;
+                            this.energy -= FLY_COST;
+                            flying = true;
+                        }
+                        break;
+                        
+                    case 'DEFENSIVE':
+                        // Keep distance, stay mobile
+                        if (dist < 250) {
+                            this.vx -= (dx > 0 ? 1 : -1) * 0.7;
+                        }
+                        // Stay high (harder to hit)
+                        if (this.y > canvas.height * 0.4 && this.energy > FLY_COST) {
+                            this.vy -= 0.6;
+                            this.energy -= FLY_COST;
+                            flying = true;
+                        }
+                        break;
+                        
+                    case 'CLOSE_COMBAT':
+                        // Circle strafe
+                        if (moveRoll < 0.5) {
+                            this.vx += 0.6;
+                        } else {
+                            this.vx -= 0.6;
+                        }
+                        // Small hops to be unpredictable
+                        if (moveRoll < 0.15 && this.energy > FLY_COST) {
+                            this.vy -= 0.7;
+                            this.energy -= FLY_COST;
+                            flying = true;
+                        }
+                        break;
+                        
+                    case 'TACTICAL':
+                    default:
+                        // Optimal range maintenance (150-250)
+                        if (dist > 280) {
+                            this.vx += (dx > 0 ? 1 : -1) * 0.5;
+                        } else if (dist < 150) {
+                            this.vx -= (dx > 0 ? 1 : -1) * 0.5;
+                        } else {
+                            // Strafe at good range
+                            this.vx += (moveRoll < 0.5 ? 0.4 : -0.4);
+                        }
+                        // Match height loosely
+                        if (Math.abs(dy) > 80 && this.energy > FLY_COST) {
+                            this.vy += (dy > 0 ? 0.5 : -0.7);
+                            if (dy < 0) this.energy -= FLY_COST;
+                            flying = dy < 0;
+                        }
+                        break;
                 }
-                // Bite (Melee)
-                else if (dist < 80 && this.biteCooldown <= 0 && roll < 0.1) {
-                    this.bite(target);
+                
+                // Safety: Don't fall off screen
+                if (this.y > canvas.height - 80 && this.energy > FLY_COST) {
+                    this.vy -= 1.2;
+                    this.energy -= FLY_COST;
+                    flying = true;
                 }
-                // Fireball (Range)
-                else if (Math.abs(dy) < 80 && this.energy > SHOOT_COST && roll < 0.02) {
-                    this.shoot();
+                // Safety: Don't go off sides
+                if (this.x < 50) this.vx += 0.8;
+                if (this.x > canvas.width - 90) this.vx -= 0.8;
+                
+                if (flying) this.createFlyParticles();
+                
+                // --- COMBAT LOGIC with PREDICTIVE AIMING ---
+                const attackRoll = Math.random();
+                
+                // Predict where target will be
+                const predictionFrames = 15;
+                const predictedX = target.x + target.vx * predictionFrames;
+                const predictedY = target.y + target.vy * predictionFrames;
+                const predictedDy = predictedY - this.y;
+                
+                // Attack decisions based on state
+                switch (aiState) {
+                    case 'AGGRESSIVE':
+                        // Heavy offense
+                        if (dist < 180 && Math.abs(dy) < 50 && this.energy > 400 && attackRoll < 0.12) {
+                            this.attemptFlamethrower(target);
+                        } else if (dist < 70 && this.biteCooldown <= 0 && attackRoll < 0.3) {
+                            this.bite(target);
+                        } else if (dist > 80 && dist < 350 && Math.abs(predictedDy) < 80 && this.energy > SHOOT_COST && attackRoll < 0.1) {
+                            this.shoot();
+                        }
+                        break;
+                        
+                    case 'DEFENSIVE':
+                        // Poke and run
+                        if (dist > 200 && dist < 400 && Math.abs(predictedDy) < 100 && this.energy > SHOOT_COST && attackRoll < 0.06) {
+                            this.shoot();
+                        }
+                        // Escape teleport when cornered
+                        if (dist < 100 && this.hp < 30 && this.energy > TELEPORT_COST && attackRoll < 0.08) {
+                            this.teleport();
+                        }
+                        break;
+                        
+                    case 'CLOSE_COMBAT':
+                        // Melee focus
+                        if (dist < 70 && this.biteCooldown <= 0 && attackRoll < 0.35) {
+                            this.bite(target);
+                        } else if (dist < 150 && Math.abs(dy) < 40 && this.energy > 300 && attackRoll < 0.2) {
+                            this.attemptFlamethrower(target);
+                        }
+                        break;
+                        
+                    case 'TACTICAL':
+                    default:
+                        // Balanced approach with prediction
+                        if (dist < 200 && Math.abs(dy) < 50 && this.energy > 450 && attackRoll < 0.08) {
+                            this.attemptFlamethrower(target);
+                        } else if (dist < 65 && this.biteCooldown <= 0 && attackRoll < 0.2) {
+                            this.bite(target);
+                        } else if (dist > 120 && dist < 380 && Math.abs(predictedDy) < 90 && this.energy > SHOOT_COST && attackRoll < 0.07) {
+                            this.shoot();
+                        }
+                        // Surprise teleport attack
+                        if (dist > 400 && this.energy > TELEPORT_COST + 200 && attackRoll < 0.015) {
+                            this.teleport();
+                        }
+                        break;
                 }
             }
 
