@@ -344,7 +344,7 @@
         let p1Joined = false;
         let p2Joined = false;
         let p2IsCpu = false;
-        let joinTimer = 10;
+        let joinTimer = 5;
         let joinInterval = null;
         
         if (isMobile) {
@@ -551,14 +551,14 @@
                     document.getElementById('startPrompt').classList.add('hidden');
                     const statusEl = document.getElementById('joinStatusDisplay');
                     statusEl.classList.remove('hidden');
-                    statusEl.innerText = "PLAYER 1 JOINED! WAITING FOR P2... 10s";
+                    statusEl.innerText = "PLAYER 1 JOINED! WAITING FOR P2... 5s (CPU activates if no P2)";
                     
                     // Start Timer
-                    joinTimer = 10;
+                    joinTimer = 5;
                     joinInterval = setInterval(() => {
                         joinTimer--;
                         if (joinTimer > 0) {
-                            statusEl.innerText = `PLAYER 1 JOINED! WAITING FOR P2... ${joinTimer}s`;
+                            statusEl.innerText = `PLAYER 1 JOINED! WAITING FOR P2... ${joinTimer}s (CPU activates if no P2)`;
                         } else {
                             // Timer Ended - CPU MODE
                             clearInterval(joinInterval);
@@ -692,7 +692,21 @@
                 this.biteCooldown = 0;
                 this.bleedTimer = 0;
                 
-                this.isSuperCharged = false; // New property
+                this.isSuperCharged = false;
+                
+                // === AI STATE VARIABLES (Modern Game AI) ===
+                this.aiState = 'ENGAGE';           // Current behavior state
+                this.aiStateTimer = 0;             // Time in current state
+                this.aiShootCooldown = 0;          // Cooldown timer for shooting
+                this.aiFlameCooldown = 0;          // Cooldown timer for flamethrower
+                this.aiMovementPhase = 0;          // For smooth movement patterns
+                this.aiTargetX = 0;                // Target position for movement
+                this.aiTargetY = 0;
+                this.aiLastPlayerX = 0;            // Track player movement
+                this.aiLastPlayerY = 0;
+                this.aiComboCount = 0;             // Current combo chain
+                this.aiAggressionLevel = 1.0;      // Rubber-banding multiplier
+                this.aiIdleFrames = 0;             // Track idle time
             }
 
             update() {
@@ -745,118 +759,245 @@
             }
 
             updateAI() {
-                // === AGGRESSIVE COMBAT AI ===
+                // ============================================================
+                // MODERN GAME AI - Using techniques from fighting/action games
+                // ============================================================
+                // Strategies: Cooldown-based attacks, Behavior Trees, 
+                // Rubber-banding, Combo systems, Constant movement
+                // ============================================================
+                
                 const target = player1;
                 const dx = target.x - this.x;
                 const dy = target.y - this.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
+                const dist = Math.sqrt(dx * dx + dy * dy);
                 const myCenterX = this.x + this.width / 2;
                 const myCenterY = this.y + this.height / 2;
                 
-                // --- ALWAYS FACE TARGET ---
+                // === DECREMENT COOLDOWNS ===
+                if (this.aiShootCooldown > 0) this.aiShootCooldown--;
+                if (this.aiFlameCooldown > 0) this.aiFlameCooldown--;
+                this.aiStateTimer++;
+                this.aiMovementPhase += 0.05;
+                
+                // === RUBBER-BANDING: Adapt difficulty based on HP difference ===
+                const hpDiff = target.hp - this.hp;
+                if (hpDiff > 30) {
+                    // Player winning - AI gets more aggressive
+                    this.aiAggressionLevel = Math.min(2.0, this.aiAggressionLevel + 0.01);
+                } else if (hpDiff < -30) {
+                    // AI winning - slightly less aggressive
+                    this.aiAggressionLevel = Math.max(0.8, this.aiAggressionLevel - 0.005);
+                }
+                
+                // === TRACK PLAYER MOVEMENT FOR PREDICTION ===
+                const playerVelX = target.x - this.aiLastPlayerX;
+                const playerVelY = target.y - this.aiLastPlayerY;
+                this.aiLastPlayerX = target.x;
+                this.aiLastPlayerY = target.y;
+                
+                // === ALWAYS FACE TARGET ===
                 this.facing = dx > 0 ? 1 : -1;
                 
-                // --- DODGE INCOMING PROJECTILES ---
-                let dodging = false;
+                // === BEHAVIOR STATE MACHINE ===
+                // States: ENGAGE, STRAFE, CHASE, RETREAT, COMBO_ATTACK
+                
+                // State transitions based on situation
+                if (this.aiStateTimer > 60) { // Re-evaluate every ~1 second
+                    this.aiStateTimer = 0;
+                    
+                    if (this.hp < 25 && dist < 150) {
+                        this.aiState = 'RETREAT';
+                    } else if (dist > 350) {
+                        this.aiState = 'CHASE';
+                    } else if (dist < 100) {
+                        this.aiState = 'COMBO_ATTACK';
+                    } else if (Math.random() < 0.5) {
+                        this.aiState = 'STRAFE';
+                    } else {
+                        this.aiState = 'ENGAGE';
+                    }
+                }
+                
+                // === CONSTANT MOVEMENT - AI NEVER STANDS STILL ===
+                let flying = false;
+                let moveX = 0;
+                let moveY = 0;
+                
+                switch (this.aiState) {
+                    case 'CHASE':
+                        // Aggressively close distance
+                        moveX = (dx > 0 ? 1.2 : -1.2) * this.aiAggressionLevel;
+                        if (dy < -20) moveY = -1.0;
+                        break;
+                        
+                    case 'RETREAT':
+                        // Back away while still attacking
+                        moveX = (dx > 0 ? -0.8 : 0.8);
+                        moveY = -0.5; // Fly up for safety
+                        break;
+                        
+                    case 'STRAFE':
+                        // Circle the player - smooth sinusoidal movement
+                        moveX = Math.sin(this.aiMovementPhase) * 1.0;
+                        moveY = Math.cos(this.aiMovementPhase * 0.7) * 0.5;
+                        // Maintain distance
+                        if (dist > 250) moveX += (dx > 0 ? 0.5 : -0.5);
+                        if (dist < 120) moveX -= (dx > 0 ? 0.5 : -0.5);
+                        break;
+                        
+                    case 'COMBO_ATTACK':
+                        // Close in for melee combo
+                        moveX = (dx > 0 ? 0.6 : -0.6);
+                        // Bob up and down to avoid hits
+                        moveY = Math.sin(this.frame * 0.2) * 0.8;
+                        break;
+                        
+                    case 'ENGAGE':
+                    default:
+                        // Standard engagement - approach optimal range
+                        if (dist > 200) {
+                            moveX = (dx > 0 ? 1.0 : -1.0);
+                        } else if (dist < 100) {
+                            moveX = (dx > 0 ? -0.5 : 0.5);
+                        } else {
+                            // At good range - weave
+                            moveX = Math.sin(this.aiMovementPhase * 1.5) * 0.7;
+                        }
+                        // Match height
+                        if (Math.abs(dy) > 50) {
+                            moveY = (dy > 0 ? 0.4 : -0.8);
+                        }
+                        break;
+                }
+                
+                // Apply movement
+                this.vx += moveX;
+                if (moveY < 0 && this.energy > FLY_COST) {
+                    this.vy += moveY;
+                    this.energy -= FLY_COST;
+                    flying = true;
+                } else if (moveY > 0) {
+                    this.vy += moveY * 0.5;
+                }
+                
+                // === DODGE INCOMING PROJECTILES (Reactive) ===
                 for (const proj of projectiles) {
                     if (proj.ownerId === this.id) continue;
-                    const projDy = myCenterY - proj.y;
                     const projDist = Math.abs(myCenterX - proj.x);
+                    const projDy = myCenterY - proj.y;
                     const isApproaching = (proj.vx > 0 && proj.x < myCenterX) || (proj.vx < 0 && proj.x > myCenterX);
                     
-                    if (isApproaching && projDist < 180 && Math.abs(projDy) < 50 && this.energy > FLY_COST * 2) {
-                        this.vy += (projDy > 0 ? -2.5 : 2.5);
-                        this.energy -= FLY_COST;
-                        dodging = true;
+                    if (isApproaching && projDist < 200 && Math.abs(projDy) < 60) {
+                        // Emergency dodge!
+                        this.vy += (projDy > 0 ? -3 : 3);
+                        if (this.energy > FLY_COST) {
+                            this.energy -= FLY_COST;
+                            flying = true;
+                        }
                         break;
                     }
                 }
                 
-                // --- AGGRESSIVE MOVEMENT - ALWAYS ENGAGE ---
-                let flying = false;
-                
-                // Chase the player - stay at optimal attack range (100-250)
-                if (dist > 250) {
-                    // Too far - chase aggressively
-                    this.vx += (dx > 0 ? 1 : -1) * 1.0;
-                } else if (dist < 80) {
-                    // Too close - back up slightly to use ranged attacks
-                    this.vx -= (dx > 0 ? 1 : -1) * 0.4;
-                } else {
-                    // Good range - strafe to be harder to hit
-                    this.vx += (Math.sin(this.frame * 0.05) * 0.6);
+                // === BOUNDARY SAFETY ===
+                if (this.y > canvas.height - 80) {
+                    this.vy -= 2.0;
+                    if (this.energy > FLY_COST) { this.energy -= FLY_COST; flying = true; }
                 }
+                if (this.y < 50) this.vy += 0.5;
+                if (this.x < 50) this.vx += 1.5;
+                if (this.x > canvas.width - 90) this.vx -= 1.5;
                 
-                // Match player height aggressively
-                if (dy < -30 && this.energy > FLY_COST) {
-                    this.vy -= 1.2;
-                    this.energy -= FLY_COST;
-                    flying = true;
-                } else if (dy > 100 && this.energy > FLY_COST) {
-                    // Don't stay too high above player
-                    this.vy += 0.3;
-                }
+                if (flying) this.createFlyParticles();
                 
-                // Random evasive jumps while fighting
-                if (!dodging && Math.random() < 0.03 && this.energy > FLY_COST * 2) {
-                    this.vy -= 1.0;
-                    this.energy -= FLY_COST;
-                    flying = true;
-                }
+                // ============================================================
+                // === ATTACK SYSTEM: Cooldown-based (GUARANTEED ATTACKS) ===
+                // ============================================================
                 
-                // Safety: Stay on screen
-                if (this.y > canvas.height - 100 && this.energy > FLY_COST) {
-                    this.vy -= 1.5;
-                    this.energy -= FLY_COST;
-                    flying = true;
-                }
-                if (this.x < 60) this.vx += 1.0;
-                if (this.x > canvas.width - 100) this.vx -= 1.0;
+                // Predict target position
+                const predFrames = 10;
+                const predX = target.x + playerVelX * predFrames;
+                const predY = target.y + playerVelY * predFrames;
+                const predDy = predY - this.y;
                 
-                if (flying || dodging) this.createFlyParticles();
+                // --- FIREBALL: Primary ranged attack ---
+                // Base cooldown: 30 frames (~0.5 sec), reduced by aggression
+                const shootCooldownBase = Math.floor(30 / this.aiAggressionLevel);
                 
-                // --- HEAVY ATTACK PATTERN - FIRE CONSTANTLY ---
-                
-                // Predict where target will be
-                const predictionFrames = 12;
-                const predictedY = target.y + target.vy * predictionFrames;
-                const predictedDy = predictedY - this.y;
-                
-                // Fireball - MAIN ATTACK - fire frequently when lined up
-                const canShoot = this.energy > SHOOT_COST && Math.abs(predictedDy) < 100;
-                if (canShoot && dist > 60 && dist < 500) {
-                    // High frequency shooting - 25% chance per frame when aligned
-                    if (Math.random() < 0.25) {
+                if (this.aiShootCooldown <= 0 && this.energy > SHOOT_COST) {
+                    // Check if roughly aligned (generous tolerance)
+                    if (Math.abs(predDy) < 120 && dist > 50 && dist < 600) {
                         this.shoot();
+                        this.aiShootCooldown = shootCooldownBase + Math.floor(Math.random() * 15);
+                        this.aiComboCount++;
+                    } else {
+                        // Not aligned - short cooldown to try again soon
+                        this.aiShootCooldown = 10;
                     }
                 }
                 
-                // Flamethrower - use when close and have energy
-                if (dist < 200 && Math.abs(dy) < 60 && this.energy > 350) {
-                    // Sustained flamethrower attack - 40% chance
-                    if (Math.random() < 0.4) {
-                        this.attemptFlamethrower(target);
+                // --- FLAMETHROWER: Close range sustained damage ---
+                // Base cooldown: 45 frames
+                const flameCooldownBase = Math.floor(45 / this.aiAggressionLevel);
+                
+                if (this.aiFlameCooldown <= 0 && this.energy > 300 && dist < 220 && Math.abs(dy) < 80) {
+                    this.attemptFlamethrower(target);
+                    this.aiFlameCooldown = flameCooldownBase;
+                    this.aiComboCount++;
+                }
+                
+                // --- BITE: Melee attack ---
+                if (dist < 80 && this.biteCooldown <= 0) {
+                    this.bite(target);
+                    this.aiComboCount++;
+                    
+                    // After bite, consider follow-up
+                    if (this.aiComboCount >= 2 && this.energy > 300) {
+                        // Combo: bite into flamethrower
+                        this.aiFlameCooldown = 0;
                     }
                 }
                 
-                // Bite - melee when very close
-                if (dist < 75 && this.biteCooldown <= 0) {
-                    // Always try to bite when in range
-                    if (Math.random() < 0.5) {
-                        this.bite(target);
+                // --- TELEPORT: Strategic repositioning ---
+                if (this.energy > TELEPORT_COST + 100) {
+                    // Teleport when too far to chase
+                    if (dist > 500 && Math.random() < 0.02 * this.aiAggressionLevel) {
+                        this.teleport();
+                        this.aiShootCooldown = 10; // Quick attack after teleport
                     }
-                }
-                
-                // Teleport - surprise attack or escape
-                if (this.energy > TELEPORT_COST + 150) {
-                    // Aggressive teleport when far away
-                    if (dist > 450 && Math.random() < 0.03) {
+                    // Escape when critical HP
+                    if (this.hp < 15 && dist < 80 && Math.random() < 0.1) {
                         this.teleport();
                     }
-                    // Escape teleport when low HP and cornered
-                    if (this.hp < 25 && dist < 100 && Math.random() < 0.05) {
-                        this.teleport();
+                }
+                
+                // === COMBO RESET ===
+                if (this.aiComboCount > 0 && this.frame % 90 === 0) {
+                    this.aiComboCount = 0;
+                }
+                
+                // === IDLE PREVENTION: Force action if nothing happening ===
+                const isMoving = Math.abs(this.vx) > 0.5 || Math.abs(this.vy) > 0.5;
+                const isAttacking = this.shootTimer > 0;
+                
+                if (!isMoving && !isAttacking) {
+                    this.aiIdleFrames++;
+                    if (this.aiIdleFrames > 30) {
+                        // Force movement toward player
+                        this.vx += (dx > 0 ? 1.5 : -1.5);
+                        if (this.energy > FLY_COST) {
+                            this.vy -= 1.0;
+                            this.energy -= FLY_COST;
+                            this.createFlyParticles();
+                        }
+                        // Force attack
+                        if (this.energy > SHOOT_COST) {
+                            this.shoot();
+                            this.aiShootCooldown = 20;
+                        }
+                        this.aiIdleFrames = 0;
                     }
+                } else {
+                    this.aiIdleFrames = 0;
                 }
             }
 
