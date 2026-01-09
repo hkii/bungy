@@ -170,7 +170,7 @@
         /* Action Buttons */
         .act-btn { width: 55px; height: 55px; }
         .btn-fire { border-color: #f87171; background: rgba(220, 38, 38, 0.3); }
-        .btn-bite { border-color: #a3a3a3; background: rgba(82, 82, 82, 0.3); }
+        .btn-bite { border-color: #38bdf8; background: linear-gradient(135deg, rgba(239,68,68,0.3), rgba(251,191,36,0.3), rgba(34,197,94,0.3), rgba(59,130,246,0.3), rgba(168,85,247,0.3)); }
         .btn-port { border-color: #c084fc; background: rgba(126, 34, 206, 0.3); }
         .btn-flame { 
             grid-column: span 2; 
@@ -224,7 +224,7 @@
                 <div class="mana-bar-bg">
                     <div id="p1Mana" class="mana-bar-fill" style="width: 100%;"></div>
                 </div>
-                <div class="text-xs text-yellow-500 mt-1 font-bold">ENERGY: 1000</div>
+                <div id="p1EnergyText" class="text-xs text-yellow-500 mt-1 font-bold">ENERGY: 1000</div>
             </div>
 
             <div class="text-white font-bold text-2xl pt-2 drop-shadow-md">
@@ -242,7 +242,7 @@
                 <div class="mana-bar-bg">
                     <div id="p2Mana" class="mana-bar-fill" style="width: 100%;"></div>
                 </div>
-                <div class="text-xs text-yellow-500 mt-1 font-bold">ENERGY: 1000</div>
+                <div id="p2EnergyText" class="text-xs text-yellow-500 mt-1 font-bold">ENERGY: 1000</div>
             </div>
         </div>
         
@@ -260,7 +260,7 @@
         </div>
         <div class="action-container">
             <div class="touch-btn act-btn btn-fire" data-key="f">FIRE</div>
-            <div class="touch-btn act-btn btn-bite" data-key="e">BITE</div>
+            <div class="touch-btn act-btn btn-bite" data-key="e">SCALE</div>
             <div class="touch-btn act-btn btn-port" data-key="g">PORT</div>
             <div class="touch-btn btn-flame" data-key="r">FLAME</div>
         </div>
@@ -275,19 +275,19 @@
                 <h3 class="text-red-400 font-bold text-2xl mb-4">PLAYER 1</h3>
                 <div class="mb-2"><span class="font-bold text-white">W A S D</span> : Move / Fly</div>
                 <div class="mb-2"><span class="font-bold text-white">F</span> : Fireball (100 Energy)</div>
-                <div class="mb-2"><span class="font-bold text-white">E</span> : Bite (Melee)</div>
+                <div class="mb-2"><span class="font-bold text-white">E</span> : Scaleshot (Disables)</div>
                 <div class="mb-2"><span class="font-bold text-white">G</span> : Teleport (300 Energy)</div>
             </div>
             <div class="text-left pl-4">
                 <h3 class="text-blue-400 font-bold text-2xl mb-4">PLAYER 2</h3>
                 <div class="mb-2"><span class="font-bold text-white">ARROWS</span> : Move / Fly</div>
                 <div class="mb-2"><span class="font-bold text-white">. (Period)</span> : Fireball</div>
-                <div class="mb-2"><span class="font-bold text-white">, (Comma)</span> : Bite</div>
+                <div class="mb-2"><span class="font-bold text-white">, (Comma)</span> : Scaleshot</div>
                 <div class="mb-2"><span class="font-bold text-white">/ (Slash)</span> : Teleport</div>
             </div>
         </div>
         
-        <p class="text-yellow-500 mt-12 font-mono text-xl animate-pulse">PRESS 'H' TO RETURN TO BATTLE</p>
+        <p class="text-yellow-500 mt-12 font-mono text-xl animate-pulse">PRESS 'H' OR ENTER TO RETURN TO BATTLE</p>
     </div>
 
     <div id="mainMenu" class="menu-overlay">
@@ -302,14 +302,14 @@
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">WASD</span> Move/Fly</p>
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">F</span> Fireball</p>
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">G</span> Teleport</p>
-                <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">E</span> Bite</p>
+                <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">E</span> Scaleshot</p>
             </div>
             <div class="text-center border-l border-gray-700">
                 <h3 class="text-blue-400 font-bold text-lg mb-4 border-b border-gray-700 pb-2">PLAYER 2</h3>
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">ARROWS</span> Move/Fly</p>
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">.</span> Fireball</p>
                 <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">/</span> Teleport</p>
-                <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">,</span> Bite</p>
+                <p class="mb-1"><span class="bg-gray-700 px-1 rounded text-white font-mono">,</span> Scaleshot</p>
             </div>
         </div>
         
@@ -324,7 +324,7 @@
         </div>
 
         <button id="startBtn" class="btn hidden">ENTER VOLCANO ISLAND</button>
-        <div id="startPrompt" class="text-white animate-pulse mt-4">PRESS P1 KEY (WASD) TO INITIALIZE</div>
+        <div id="startPrompt" class="text-white animate-pulse mt-4">PRESS P1 KEY (WASD) OR ENTER TO INITIALIZE</div>
     </div>
 
     <div id="gameOverMenu" class="menu-overlay hidden">
@@ -487,8 +487,10 @@
         
         const p1HealthBar = document.getElementById('p1Health');
         const p1ManaBar = document.getElementById('p1Mana');
+        const p1EnergyText = document.getElementById('p1EnergyText');
         const p2HealthBar = document.getElementById('p2Health');
         const p2ManaBar = document.getElementById('p2Mana');
+        const p2EnergyText = document.getElementById('p2EnergyText');
         const scoreDisplay = document.getElementById('scoreDisplay');
 
         const GRAVITY = 0.4;
@@ -541,6 +543,94 @@
             keys[e.key] = true;
             if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].indexOf(e.code) > -1) {
                 e.preventDefault();
+            }
+
+            // ENTER KEY (Desktop): Activate menu buttons / close overlays
+            if (!isMobile && (e.key === 'Enter' || e.code === 'NumpadEnter')) {
+                // Close help overlay quickly
+                if (gameState === 'PLAYING') {
+                    const helpEl = document.getElementById('helpScreen');
+                    if (helpEl && !helpEl.classList.contains('hidden')) {
+                        helpEl.classList.add('hidden');
+                        e.preventDefault();
+                        return;
+                    }
+                }
+
+                // Main Menu: start game when ready (or join/force CPU for keyboard-only flow)
+                if (gameState === 'MENU') {
+                    const startBtn = document.getElementById('startBtn');
+                    const startPrompt = document.getElementById('startPrompt');
+                    const statusEl = document.getElementById('joinStatusDisplay');
+
+                    // If the Start button is available, Enter starts immediately.
+                    if (startBtn && !startBtn.classList.contains('hidden')) {
+                        e.preventDefault();
+                        startGame();
+                        return;
+                    }
+
+                    // If P1 hasn't joined yet, Enter joins P1 (same as pressing a P1 key).
+                    if (!p1Joined) {
+                        p1Joined = true;
+                        if (startPrompt) startPrompt.classList.add('hidden');
+                        if (statusEl) {
+                            statusEl.classList.remove('hidden');
+                            statusEl.style.color = "#fbbf24";
+                            statusEl.innerText = "PLAYER 1 JOINED! WAITING FOR P2... 5s (CPU activates if no P2)";
+                        }
+
+                        // Start (or restart) the CPU activation timer
+                        joinTimer = 5;
+                        if (joinInterval) clearInterval(joinInterval);
+                        joinInterval = setInterval(() => {
+                            joinTimer--;
+                            if (joinTimer > 0) {
+                                if (statusEl) {
+                                    statusEl.innerText = `PLAYER 1 JOINED! WAITING FOR P2... ${joinTimer}s (CPU activates if no P2)`;
+                                }
+                            } else {
+                                // Timer Ended - CPU MODE
+                                clearInterval(joinInterval);
+                                p2IsCpu = true;
+                                if (statusEl) {
+                                    statusEl.innerText = "NO OPPONENT FOUND. CPU MODE ACTIVATED.";
+                                    statusEl.style.color = "#ef4444";
+                                }
+                                document.getElementById('p2Label').innerText = "P2 (CPU)";
+                                if (startBtn) startBtn.classList.remove('hidden');
+                            }
+                        }, 1000);
+
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // If waiting for P2, Enter instantly forces CPU mode and reveals Start.
+                    if (p1Joined && !p2Joined && !p2IsCpu) {
+                        if (joinInterval) clearInterval(joinInterval);
+                        p2IsCpu = true;
+                        if (statusEl) {
+                            statusEl.classList.remove('hidden');
+                            statusEl.innerText = "NO OPPONENT FOUND. CPU MODE ACTIVATED.";
+                            statusEl.style.color = "#ef4444";
+                        }
+                        document.getElementById('p2Label').innerText = "P2 (CPU)";
+                        if (startBtn) startBtn.classList.remove('hidden');
+
+                        e.preventDefault();
+                        return;
+                    }
+
+                    // Otherwise: do nothing (Enter won't start until ready)
+                }
+
+                // Game Over screen: Enter = Rematch
+                if (gameState === 'GAMEOVER') {
+                    e.preventDefault();
+                    startGame();
+                    return;
+                }
             }
             
             // MENU LOGIC FOR DESKTOP JOIN
@@ -644,20 +734,22 @@
             // Player 2 is handled by AI on mobile/CPU mode, or keys on desktop
             if (key.toLowerCase() === 'f') player1.shoot();
             if (key.toLowerCase() === 'g') player1.teleport();
-            if (key.toLowerCase() === 'e') player1.bite(player2);
+            if (key.toLowerCase() === 'e') player1.scaleshot();
             
             // Allow P2 keys ONLY if not CPU
             if (!isMobile && !p2IsCpu) {
                 if (key === '.') player2.shoot();
                 if (key === '/') player2.teleport();
-                if (key === ',') player2.bite(player1);
+                if (key === ',') player2.scaleshot();
             }
         }
         
         function triggerSecretCheat() {
             // New "QQQ" Logic: Super Charge Mode
             player1.isSuperCharged = true;
-            player1.energy = MAX_ENERGY; // Max out energy for rampage
+            // Double max energy (2000) and refill
+            player1.maxEnergy = MAX_ENERGY * 2;
+            player1.energy = player1.maxEnergy;
             AudioEngine.teleport(); // Play powerup sound
             
             // Visual Burst
@@ -677,7 +769,8 @@
                 this.vx = 0;
                 this.vy = 0;
                 this.hp = 100;
-                this.energy = MAX_ENERGY; 
+                this.maxEnergy = MAX_ENERGY;
+                this.energy = this.maxEnergy; 
                 this.facing = 1; 
                 this.score = 0;
                 this.isDead = false;
@@ -689,8 +782,10 @@
                 this.animState = 'sitting';
                 this.shootTimer = 0; 
                 this.invulnTimer = 0; 
-                this.biteCooldown = 0;
+                this.scaleshotCooldown = 0;
                 this.bleedTimer = 0;
+                this.disabledTimer = 0; // Can't fly or teleport when > 0
+                this.hurtStack = 0; // Builds up when taking lots of hits; folds tail defensively
                 
                 this.isSuperCharged = false;
                 
@@ -714,7 +809,26 @@
                 this.frame++;
                 if (this.shootTimer > 0) this.shootTimer--;
                 if (this.invulnTimer > 0) this.invulnTimer--;
-                if (this.biteCooldown > 0) this.biteCooldown--;
+                if (this.scaleshotCooldown > 0) this.scaleshotCooldown--;
+                if (this.disabledTimer > 0) {
+                    this.disabledTimer--;
+                    // Visual effect when disabled - dripping water
+                    if (Math.random() > 0.7) {
+                        const rainbowColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+                        particles.push(new Particle(
+                            this.x + Math.random() * this.width,
+                            this.y + this.height,
+                            0, 2 + Math.random(),
+                            rainbowColors[Math.floor(Math.random() * rainbowColors.length)],
+                            0.6
+                        ));
+                    }
+                }
+
+                // Damage pressure (used for tail folding). Decays smoothly over time.
+                if (this.hurtStack > 0) {
+                    this.hurtStack = Math.max(0, this.hurtStack - 0.02);
+                }
 
                 // Super Charged Effects (On Fire)
                 if (this.isSuperCharged) {
@@ -743,9 +857,9 @@
                     }
                 }
 
-                if (this.energy < MAX_ENERGY) {
+                if (this.energy < this.maxEnergy) {
                     this.energy += ENERGY_REGEN;
-                    if(this.energy > MAX_ENERGY) this.energy = MAX_ENERGY;
+                    if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
                 }
 
                 // AI Overide for Player 2 on Mobile or Desktop CPU mode
@@ -870,9 +984,12 @@
                         break;
                 }
                 
+                // Check if AI can fly (disabled by scaleshot?)
+                const canFly = this.disabledTimer <= 0;
+                
                 // Apply movement
                 this.vx += moveX;
-                if (moveY < 0 && this.energy > FLY_COST) {
+                if (moveY < 0 && this.energy > FLY_COST && canFly) {
                     this.vy += moveY;
                     this.energy -= FLY_COST;
                     flying = true;
@@ -888,9 +1005,9 @@
                     const isApproaching = (proj.vx > 0 && proj.x < myCenterX) || (proj.vx < 0 && proj.x > myCenterX);
                     
                     if (isApproaching && projDist < 200 && Math.abs(projDy) < 60) {
-                        // Emergency dodge!
+                        // Emergency dodge! (only if can fly)
                         this.vy += (projDy > 0 ? -3 : 3);
-                        if (this.energy > FLY_COST) {
+                        if (this.energy > FLY_COST && canFly) {
                             this.energy -= FLY_COST;
                             flying = true;
                         }
@@ -901,7 +1018,7 @@
                 // === BOUNDARY SAFETY ===
                 if (this.y > canvas.height - 80) {
                     this.vy -= 2.0;
-                    if (this.energy > FLY_COST) { this.energy -= FLY_COST; flying = true; }
+                    if (this.energy > FLY_COST && canFly) { this.energy -= FLY_COST; flying = true; }
                 }
                 if (this.y < 50) this.vy += 0.5;
                 if (this.x < 50) this.vx += 1.5;
@@ -945,20 +1062,22 @@
                     this.aiComboCount++;
                 }
                 
-                // --- BITE: Melee attack ---
-                if (dist < 80 && this.biteCooldown <= 0) {
-                    this.bite(target);
-                    this.aiComboCount++;
-                    
-                    // After bite, consider follow-up
-                    if (this.aiComboCount >= 2 && this.energy > 300) {
-                        // Combo: bite into flamethrower
-                        this.aiFlameCooldown = 0;
+                // --- SCALESHOT: Ranged disable attack ---
+                if (dist < 300 && dist > 100 && this.scaleshotCooldown <= 0 && this.energy > 150) {
+                    // Use scaleshot to disable enemy's flight/teleport
+                    if (Math.abs(predDy) < 100) {
+                        this.scaleshot();
+                        this.aiComboCount++;
+                        
+                        // After scaleshot, consider follow-up with flamethrower
+                        if (this.aiComboCount >= 2 && this.energy > 300) {
+                            this.aiFlameCooldown = 0;
+                        }
                     }
                 }
                 
-                // --- TELEPORT: Strategic repositioning ---
-                if (this.energy > TELEPORT_COST + 100) {
+                // --- TELEPORT: Strategic repositioning (only if not disabled!) ---
+                if (this.energy > TELEPORT_COST + 100 && this.disabledTimer <= 0) {
                     // Teleport when too far to chase
                     if (dist > 500 && Math.random() < 0.02 * this.aiAggressionLevel) {
                         this.teleport();
@@ -1004,19 +1123,23 @@
             updateManual() {
                 let flying = false;
                 let flaming = false;
+                
+                // Check if disabled (can't fly when hit by scaleshot)
+                const canFly = this.disabledTimer <= 0;
+                const speedMult = this.isSuperCharged ? 2.0 : 1.0;
 
                 if (this.id === 1) {
-                    if (keys['a'] || keys['A']) { this.vx -= 0.8; this.facing = -1; }
-                    if (keys['d'] || keys['D']) { this.vx += 0.8; this.facing = 1; }
-                    if ((keys['w'] || keys['W']) && this.energy > FLY_COST) {
-                        this.vy -= 0.8; this.energy -= FLY_COST; flying = true;
+                    if (keys['a'] || keys['A']) { this.vx -= 0.8 * speedMult; this.facing = -1; }
+                    if (keys['d'] || keys['D']) { this.vx += 0.8 * speedMult; this.facing = 1; }
+                    if ((keys['w'] || keys['W']) && this.energy > FLY_COST && canFly) {
+                        this.vy -= 0.8 * speedMult; this.energy -= FLY_COST; flying = true;
                     } 
                     if (keys['r'] || keys['R']) flaming = this.attemptFlamethrower(player2);
                 } else {
-                    if (keys['ArrowLeft']) { this.vx -= 0.8; this.facing = -1; }
-                    if (keys['ArrowRight']) { this.vx += 0.8; this.facing = 1; }
-                    if (keys['ArrowUp'] && this.energy > FLY_COST) {
-                        this.vy -= 0.8; this.energy -= FLY_COST; flying = true;
+                    if (keys['ArrowLeft']) { this.vx -= 0.8 * speedMult; this.facing = -1; }
+                    if (keys['ArrowRight']) { this.vx += 0.8 * speedMult; this.facing = 1; }
+                    if (keys['ArrowUp'] && this.energy > FLY_COST && canFly) {
+                        this.vy -= 0.8 * speedMult; this.energy -= FLY_COST; flying = true;
                     } 
                     if (keys[';']) flaming = this.attemptFlamethrower(player1);
                 }
@@ -1042,11 +1165,13 @@
 
             applyPhysics() {
                 this.vy += GRAVITY;
-                this.vx *= FRICTION;
-                this.vy *= FRICTION;
+                const friction = this.isSuperCharged ? 0.985 : FRICTION;
+                this.vx *= friction;
+                this.vy *= friction;
 
-                this.vx = Math.max(Math.min(this.vx, MAX_SPEED), -MAX_SPEED);
-                this.vy = Math.max(Math.min(this.vy, MAX_SPEED), -MAX_SPEED);
+                const maxSpeed = MAX_SPEED * (this.isSuperCharged ? 2.0 : 1.0);
+                this.vx = Math.max(Math.min(this.vx, maxSpeed), -maxSpeed);
+                this.vy = Math.max(Math.min(this.vy, maxSpeed), -maxSpeed);
 
                 this.x += this.vx;
                 this.y += this.vy;
@@ -1101,28 +1226,43 @@
                     
                     if (this.frame % 5 === 0) AudioEngine.flamethrower();
 
-                    const ex = this.facing === 1 ? this.x + this.width + 5 : this.x - 5;
-                    const ey = this.y + this.height/2 - 10;
+                    // === FLAMETHROWER FROM MOUTH ===
+                    // Dragon mouth position - offset from center to the snout
+                    const centerX = this.x + this.width / 2;
+                    const centerY = this.y + this.height / 2;
+                    const mouthOffsetX = 35; // Mouth tip offset
+                    const mouthOffsetY = -20; // Mouth is above center
+                    
+                    const ex = centerX + (mouthOffsetX * this.facing);
+                    const ey = centerY + mouthOffsetY;
 
                     for(let i=0; i<10; i++) {
                         const speed = 10 + Math.random() * 10;
-                        const angle = (Math.random() - 0.5) * 0.3; 
+                        const angle = (Math.random() - 0.5) * 0.4; // Slight spread
                         const pVx = (this.facing * speed) + this.vx;
                         const pVy = (Math.sin(angle) * speed) + this.vy;
                         
-                        particles.push(new Particle(ex, ey, pVx, pVy, 
-                            Math.random() > 0.3 ? '#ef4444' : '#ffffff', 0.6
-                        ));
+                        // Mix of fire colors
+                        const fireColors = ['#ef4444', '#f97316', '#fbbf24', '#ffffff'];
+                        const color = fireColors[Math.floor(Math.random() * fireColors.length)];
+                        
+                        particles.push(new Particle(ex, ey, pVx, pVy, color, 0.6));
                     }
 
                     const range = 250;
-                    const beamWidth = 40;
+                    const beamWidth = 60;
+                    
+                    // Use target center for better hit detection
+                    const targetCenterX = target.x + target.width / 2;
+                    const targetCenterY = target.y + target.height / 2;
                     
                     let hit = false;
                     if (this.facing === 1) {
-                         if (target.x > ex && target.x < ex + range && Math.abs((target.y + target.height/2) - ey) < beamWidth) hit = true;
+                         // Facing right - target should be to the right of mouth
+                         if (targetCenterX > ex && targetCenterX < ex + range && Math.abs(targetCenterY - ey) < beamWidth) hit = true;
                     } else {
-                         if (target.x < ex && target.x > ex - range && Math.abs((target.y + target.height/2) - ey) < beamWidth) hit = true;
+                         // Facing left - target should be to the left of mouth
+                         if (targetCenterX < ex && targetCenterX > ex - range && Math.abs(targetCenterY - ey) < beamWidth) hit = true;
                     }
 
                     if (hit) {
@@ -1158,19 +1298,90 @@
 
                 this.drawLegs(ctx, this.secondaryColor, -1);
 
-                // Tail
-                ctx.beginPath();
-                ctx.moveTo(-30, 10);
-                if (this.animState === 'sitting') {
-                    ctx.quadraticCurveTo(-60, 40, -20, 40);
-                    ctx.quadraticCurveTo(-40, 40, -30, 20);
+                // Tail (spiked) — wag when sitting idle, raise when running, fold when taking lots of hits
+                const isSitting = this.animState === 'sitting';
+                const isRunning = this.animState === 'walking';
+                const tailFolded = (this.hurtStack > 2.2) || (this.hp < 25);
+
+                const wagSpeed = isSitting ? 0.06 : (isRunning ? 0.18 : 0.12);
+                const wagAmp = tailFolded ? 1.0 : (isSitting ? 6 : (isRunning ? 8 : 5));
+                const tailWag = Math.sin(this.frame * wagSpeed) * wagAmp;
+
+                const baseX = -30;
+                const baseY = isRunning ? 0 : 10;
+
+                let topCtrlX, topCtrlY, tipX, tipY, botCtrlX, botCtrlY, endX, endY;
+
+                if (tailFolded) {
+                    // Folded tail: tucked close to body (defensive)
+                    topCtrlX = -45; topCtrlY = 25 + tailWag * 0.2;
+                    tipX = -60;     tipY = 28 + tailWag * 0.15;
+                    botCtrlX = -45; botCtrlY = 40;
+                    endX = -30;     endY = 20;
+                } else if (isSitting) {
+                    // Sitting idle: slow wag, tail low and relaxed
+                    topCtrlX = -70; topCtrlY = 32 + tailWag;
+                    tipX = -95;     tipY = 44 + tailWag * 0.6;
+                    botCtrlX = -75; botCtrlY = 58 + tailWag;
+                    endX = -30;     endY = 20;
+                } else if (isRunning) {
+                    // Running: tail raised up
+                    topCtrlX = -75; topCtrlY = -25 + tailWag;
+                    tipX = -105;    tipY = -35 + tailWag * 0.7;
+                    botCtrlX = -75; botCtrlY = -8 + tailWag;
+                    endX = -30;     endY = 15;
                 } else {
-                    let tailWag = Math.sin(this.frame * 0.1) * 5;
-                    ctx.quadraticCurveTo(-70, 0 + tailWag, -90, -10 + tailWag);
-                    ctx.quadraticCurveTo(-70, 10 + tailWag, -30, 20);
+                    // Default: light wag
+                    topCtrlX = -70; topCtrlY = 0 + tailWag;
+                    tipX = -95;     tipY = -10 + tailWag;
+                    botCtrlX = -70; botCtrlY = 15 + tailWag;
+                    endX = -30;     endY = 20;
                 }
+
+                // Tail body
+                ctx.beginPath();
+                ctx.moveTo(baseX, baseY);
+                ctx.quadraticCurveTo(topCtrlX, topCtrlY, tipX, tipY);
+                ctx.quadraticCurveTo(botCtrlX, botCtrlY, endX, endY);
                 ctx.fillStyle = this.color;
                 ctx.fill();
+
+                // Tail spikes (integrated: skin base + golden tip)
+                const spikeCount = tailFolded ? 3 : 5;
+                for (let i = 0; i < spikeCount; i++) {
+                    const t = (i + 1) / (spikeCount + 1);
+                    const sx = baseX + (tipX - baseX) * t;
+                    const sy = baseY + (tipY - baseY) * t;
+
+                    const baseHeight = tailFolded ? 7 : (isRunning ? 12 : (isSitting ? 10 : 9));
+                    const spikeHeight = baseHeight * (1 - i * 0.08);
+
+                    // Spike base (connects to tail)
+                    ctx.beginPath();
+                    ctx.moveTo(sx - 4, sy + 3);
+                    ctx.lineTo(sx, sy - spikeHeight);
+                    ctx.lineTo(sx + 4, sy + 3);
+                    ctx.closePath();
+                    ctx.fillStyle = this.secondaryColor;
+                    ctx.fill();
+
+                    // Spike tip (golden edge)
+                    ctx.beginPath();
+                    ctx.moveTo(sx - 2, sy + 1);
+                    ctx.lineTo(sx, sy - spikeHeight);
+                    ctx.lineTo(sx + 2, sy + 1);
+                    ctx.closePath();
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fill();
+
+                    // Highlight
+                    ctx.beginPath();
+                    ctx.moveTo(sx - 1, sy);
+                    ctx.lineTo(sx, sy - spikeHeight + 3);
+                    ctx.lineTo(sx + 0.8, sy);
+                    ctx.fillStyle = '#fef3c7';
+                    ctx.fill();
+                }
 
                 // Far Wing
                 this.drawWing(ctx, this.secondaryColor, -1);
@@ -1184,6 +1395,44 @@
                 }
                 ctx.fillStyle = this.color;
                 ctx.fill();
+
+                // === BACK SPIKES (integrated with body) ===
+                // Spikes are drawn right on the spine, looking like natural growths
+                const bodyTopY = this.animState === 'sitting' ? -18 : -28;
+                
+                for (let i = 0; i < 7; i++) {
+                    const spikeX = -40 + i * 11;
+                    // Spikes follow the curve of the back - taller in middle
+                    const spineOffset = Math.sin((i / 6) * Math.PI) * 4; // Curved spine
+                    const spikeBaseY = bodyTopY + 2 - spineOffset;
+                    const spikeHeight = 10 + Math.sin((i / 6) * Math.PI) * 8; // Taller in middle
+                    
+                    // Spike base (connects to body)
+                    ctx.beginPath();
+                    ctx.moveTo(spikeX - 4, spikeBaseY + 3);
+                    ctx.lineTo(spikeX, spikeBaseY - spikeHeight);
+                    ctx.lineTo(spikeX + 4, spikeBaseY + 3);
+                    ctx.closePath();
+                    ctx.fillStyle = this.secondaryColor; // Match dragon color
+                    ctx.fill();
+                    
+                    // Spike edge (golden tip)
+                    ctx.beginPath();
+                    ctx.moveTo(spikeX - 2, spikeBaseY);
+                    ctx.lineTo(spikeX, spikeBaseY - spikeHeight);
+                    ctx.lineTo(spikeX + 2, spikeBaseY);
+                    ctx.closePath();
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fill();
+                    
+                    // Spike highlight (shiny edge)
+                    ctx.beginPath();
+                    ctx.moveTo(spikeX - 1, spikeBaseY - 2);
+                    ctx.lineTo(spikeX, spikeBaseY - spikeHeight + 3);
+                    ctx.lineTo(spikeX + 0.5, spikeBaseY - 2);
+                    ctx.fillStyle = '#fef3c7';
+                    ctx.fill();
+                }
 
                 // Belly
                 ctx.beginPath();
@@ -1212,7 +1461,7 @@
                     ctx.fillStyle = this.color;
                     ctx.fill();
 
-                    // Inside
+                    // Inside mouth (dark)
                     ctx.beginPath();
                     ctx.moveTo(80, -55);
                     ctx.lineTo(90, -65);
@@ -1245,12 +1494,66 @@
                 ctx.fillStyle = 'black';
                 ctx.fill();
 
-                // Horn
+                // === HEAD SPIKES (Crown of Horns - integrated) ===
+                // Main central horn with base
                 ctx.beginPath();
-                ctx.moveTo(55, -65);
-                ctx.lineTo(45, -75);
-                ctx.lineTo(58, -65);
+                ctx.moveTo(52, -66);
+                ctx.lineTo(55, -85);
+                ctx.lineTo(58, -66);
+                ctx.closePath();
+                ctx.fillStyle = this.secondaryColor; // Match head color at base
+                ctx.fill();
+                // Horn golden part
+                ctx.beginPath();
+                ctx.moveTo(53, -68);
+                ctx.lineTo(55, -85);
+                ctx.lineTo(57, -68);
                 ctx.fillStyle = '#fbbf24'; 
+                ctx.fill();
+                // Horn highlight
+                ctx.beginPath();
+                ctx.moveTo(54, -70);
+                ctx.lineTo(55, -83);
+                ctx.lineTo(55.5, -70);
+                ctx.fillStyle = '#fef3c7';
+                ctx.fill();
+                
+                // Left head spike (behind eye, part of head ridge)
+                ctx.beginPath();
+                ctx.moveTo(46, -64);
+                ctx.lineTo(42, -76);
+                ctx.lineTo(50, -64);
+                ctx.closePath();
+                ctx.fillStyle = this.secondaryColor;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(47, -65);
+                ctx.lineTo(43, -74);
+                ctx.lineTo(49, -65);
+                ctx.fillStyle = '#fbbf24';
+                ctx.fill();
+                
+                // Right head spike (above snout)
+                ctx.beginPath();
+                ctx.moveTo(62, -66);
+                ctx.lineTo(66, -78);
+                ctx.lineTo(68, -66);
+                ctx.closePath();
+                ctx.fillStyle = this.secondaryColor;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(63, -67);
+                ctx.lineTo(66, -76);
+                ctx.lineTo(67, -67);
+                ctx.fillStyle = '#fbbf24';
+                ctx.fill();
+                
+                // Small nose horn
+                ctx.beginPath();
+                ctx.moveTo(75, -62);
+                ctx.lineTo(78, -70);
+                ctx.lineTo(80, -62);
+                ctx.fillStyle = '#fbbf24';
                 ctx.fill();
 
                 this.drawLegs(ctx, this.color, 1);
@@ -1324,7 +1627,8 @@
             }
 
             teleport() {
-                if (this.isDead || this.energy < TELEPORT_COST) return;
+                // Can't teleport if disabled by scaleshot!
+                if (this.isDead || this.energy < TELEPORT_COST || this.disabledTimer > 0) return;
                 
                 this.energy -= TELEPORT_COST;
                 AudioEngine.teleport();
@@ -1344,8 +1648,26 @@
                 AudioEngine.shoot();
                 this.shootTimer = 15; 
                 
-                const startX = this.facing === 1 ? this.x + this.width + 10 : this.x - 20;
-                const startY = this.y + this.height/2 - 15; 
+                // === FIREBALL FROM MOUTH ===
+                // Dragon mouth position - offset from center to the snout
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                const mouthOffsetX = 35; // Mouth tip offset
+                const mouthOffsetY = -20; // Mouth is above center
+                
+                const startX = centerX + (mouthOffsetX * this.facing);
+                const startY = centerY + mouthOffsetY;
+                
+                // Muzzle flash particles from mouth
+                for (let i = 0; i < 8; i++) {
+                    particles.push(new Particle(
+                        startX, startY,
+                        this.facing * (3 + Math.random() * 4),
+                        (Math.random() - 0.5) * 4,
+                        Math.random() > 0.5 ? '#fbbf24' : '#ef4444',
+                        0.5
+                    ));
+                }
                 
                 projectiles.push(new Projectile(
                     startX, 
@@ -1358,33 +1680,69 @@
 
             takeDamage(amount) {
                 this.hp -= amount;
+
+                // Track "too many hits" for tail folding animation.
+                // Small, rapid damage ticks (e.g., flamethrower) build up slower than big hits.
+                if (amount > 0) {
+                    const inc = Math.min(1.2, Math.max(0.35, amount / 10));
+                    this.hurtStack = Math.min(5, this.hurtStack + inc);
+                }
+
                 createParticles(this.x + this.width/2, this.y + this.height/2, this.color, 10);
                 if (this.hp <= 0) { this.hp = 0; this.die(); }
             }
             
-            bite(target) {
-                if (this.isDead || this.biteCooldown > 0) return;
+            scaleshot() {
+                if (this.isDead || this.scaleshotCooldown > 0 || this.energy < 150) return;
                 
-                const cx1 = this.x + this.width/2;
-                const cy1 = this.y + this.height/2;
-                const cx2 = target.x + target.width/2;
-                const cy2 = target.y + target.height/2;
-                const dist = Math.sqrt(Math.pow(cx2-cx1, 2) + Math.pow(cy2-cy1, 2));
+                this.energy -= 150;
+                this.scaleshotCooldown = 60; // 1 second cooldown
+                this.shootTimer = 10;
                 
-                this.shootTimer = 15; 
-                this.biteCooldown = 45; 
-                AudioEngine.bite();
+                // Sound effect
+                AudioEngine.playTone(600, 'sine', 0.2, 0.15);
+                AudioEngine.playTone(800, 'sine', 0.15, 0.1);
                 
-                if (dist < 80) {
-                    target.takeDamage(5); 
-                    target.bleedTimer = 120; 
+                // Spawn position from mouth
+                const centerX = this.x + this.width / 2;
+                const centerY = this.y + this.height / 2;
+                const mouthOffsetX = 35;
+                const mouthOffsetY = -20;
+                const startX = centerX + (mouthOffsetX * this.facing);
+                const startY = centerY + mouthOffsetY;
+                
+                // Shoot 5 rainbow water droplets in a spread
+                const rainbowColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+                const spreadAngles = [-0.3, -0.15, 0, 0.15, 0.3];
+                
+                for (let i = 0; i < 5; i++) {
+                    const color = rainbowColors[i % rainbowColors.length];
+                    const angle = spreadAngles[i];
+                    const speed = 20; // High speed!
                     
-                    createParticles(cx2, cy2, '#ff0000', 15); 
-                    
-                    const angle = Math.atan2(cy2 - cy1, cx2 - cx1);
-                    target.vx += Math.cos(angle) * 5;
-                    target.vy += Math.sin(angle) * 5;
+                    projectiles.push(new ScaleProjectile(
+                        startX,
+                        startY,
+                        this.facing * speed * Math.cos(angle),
+                        speed * Math.sin(angle),
+                        this.id,
+                        color
+                    ));
                 }
+                
+                // Muzzle particles
+                for (let i = 0; i < 12; i++) {
+                    particles.push(new Particle(
+                        startX, startY,
+                        this.facing * (2 + Math.random() * 3),
+                        (Math.random() - 0.5) * 3,
+                        rainbowColors[Math.floor(Math.random() * rainbowColors.length)],
+                        0.5
+                    ));
+                }
+                
+                // Recoil
+                this.vx -= this.facing * 3;
             }
 
             die() {
@@ -1400,6 +1758,7 @@
                 this.x = x; this.y = y; this.vx = vx;
                 this.size = 10; this.ownerId = ownerId; this.active = true;
                 this.color = '#fbbf24';
+                this.isScale = false; // Regular fireball
             }
             update() {
                 this.x += this.vx;
@@ -1415,6 +1774,75 @@
                 ctx.fillStyle = this.color;
                 ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
                 ctx.shadowBlur = 0;
+            }
+        }
+
+        // === SCALESHOT PROJECTILE - Rainbow Water Droplet ===
+        class ScaleProjectile {
+            constructor(x, y, vx, vy, ownerId, color) {
+                this.x = x; 
+                this.y = y; 
+                this.vx = vx;
+                this.vy = vy;
+                this.size = 8;
+                this.ownerId = ownerId; 
+                this.active = true;
+                this.color = color;
+                this.isScale = true; // This disables enemy fly/teleport
+                this.frame = 0;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.frame++;
+                
+                // Slight gravity for water droplet feel
+                this.vy += 0.1;
+                
+                // Rainbow shimmer trail
+                if (Math.random() > 0.3) {
+                    const rainbowColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+                    particles.push(new Particle(
+                        this.x, this.y, 
+                        (Math.random()-0.5)*2, (Math.random()-0.5)*2, 
+                        rainbowColors[Math.floor(Math.random() * rainbowColors.length)], 
+                        0.5
+                    ));
+                }
+                
+                // Offscreen check
+                if (this.x < -50 || this.x > canvas.width + 50 || this.y > canvas.height + 50) {
+                    this.active = false;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Rotate based on velocity
+                const angle = Math.atan2(this.vy, this.vx);
+                ctx.rotate(angle);
+                
+                // Glow effect
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                
+                // Water droplet shape
+                ctx.beginPath();
+                ctx.moveTo(this.size * 1.5, 0); // Pointy tip
+                ctx.quadraticCurveTo(this.size * 0.5, -this.size, -this.size * 0.5, 0);
+                ctx.quadraticCurveTo(this.size * 0.5, this.size, this.size * 1.5, 0);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // Inner shine
+                ctx.beginPath();
+                ctx.arc(-this.size * 0.2, 0, this.size * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
             }
         }
 
@@ -1507,16 +1935,48 @@
                 let target = proj.ownerId === 1 ? player2 : player1;
                 let attacker = proj.ownerId === 1 ? player1 : player2;
                 
-                if (proj.x > target.x && proj.x < target.x + target.width && proj.y > target.y && proj.y < target.y + target.height) {
+                // Use larger hitbox to match visual dragon size (dragon is drawn bigger than base hitbox)
+                const hitboxPadding = 25; // Expand hitbox to match visual size
+                const targetLeft = target.x - hitboxPadding;
+                const targetRight = target.x + target.width + hitboxPadding;
+                const targetTop = target.y - hitboxPadding;
+                const targetBottom = target.y + target.height + hitboxPadding;
+                
+                if (proj.x > targetLeft && proj.x < targetRight && proj.y > targetTop && proj.y < targetBottom) {
                     proj.active = false;
-                    AudioEngine.explosion();
                     
-                    // Check for One Shot Kill logic
-                    let damage = 10;
-                    if (attacker.isSuperCharged) damage = 1000;
-                    
-                    target.takeDamage(damage);
-                    target.vx += (proj.vx > 0 ? 10 : -10);
+                    // Check if it's a scaleshot (rainbow water droplet)
+                    if (proj.isScale) {
+                        // Scaleshot: Less damage but disables fly/teleport for 5 seconds!
+                        AudioEngine.playTone(300, 'sine', 0.3, 0.2);
+                        target.takeDamage(5);
+                        target.disabledTimer = 300; // 5 seconds at 60fps
+                        
+                        // Big splash effect
+                        const rainbowColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+                        for (let i = 0; i < 20; i++) {
+                            particles.push(new Particle(
+                                proj.x, proj.y,
+                                (Math.random() - 0.5) * 8,
+                                (Math.random() - 0.5) * 8,
+                                rainbowColors[Math.floor(Math.random() * rainbowColors.length)],
+                                0.8
+                            ));
+                        }
+                        
+                        // Small knockback
+                        target.vx += (proj.vx > 0 ? 3 : -3);
+                    } else {
+                        // Regular fireball
+                        AudioEngine.explosion();
+                        
+                        // Check for One Shot Kill logic
+                        let damage = 10;
+                        if (attacker.isSuperCharged) damage = 1000;
+                        
+                        target.takeDamage(damage);
+                        target.vx += (proj.vx > 0 ? 10 : -10);
+                    }
                 }
             });
 
@@ -1560,10 +2020,13 @@
 
         function updateHUD() {
             p1HealthBar.style.width = player1.hp + '%';
-            p1ManaBar.style.width = (player1.energy / MAX_ENERGY * 100) + '%';
+            p1ManaBar.style.width = Math.max(0, Math.min(100, (player1.energy / player1.maxEnergy * 100))) + '%';
             p2HealthBar.style.width = player2.hp + '%';
-            p2ManaBar.style.width = (player2.energy / MAX_ENERGY * 100) + '%';
+            p2ManaBar.style.width = Math.max(0, Math.min(100, (player2.energy / player2.maxEnergy * 100))) + '%';
             scoreDisplay.innerText = `${player1.score} - ${player2.score}`;
+
+            if (p1EnergyText) p1EnergyText.innerText = `ENERGY: ${Math.floor(player1.energy)}/${player1.maxEnergy}`;
+            if (p2EnergyText) p2EnergyText.innerText = `ENERGY: ${Math.floor(player2.energy)}/${player2.maxEnergy}`;
         }
 
         function loop(timestamp) {
