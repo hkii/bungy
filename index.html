@@ -334,7 +334,7 @@
 
     <script>
         // --- MOBILE DETECTION ---
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1000;
+        const isMobile = (window.matchMedia("(pointer: coarse)").matches && window.innerWidth < 1000);
         const CONTROLS_HEIGHT = 180;
 
         const canvas = document.getElementById('gameCanvas');
